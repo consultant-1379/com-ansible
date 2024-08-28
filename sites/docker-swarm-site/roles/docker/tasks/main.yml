@@ -1,0 +1,89 @@
+---
+
+- name: Updating apt cache
+  become: yes
+  apt:
+    update_cache: yes
+  tags: docker
+
+- name: Installing prereqs for docker
+  become: yes
+  apt:
+    name: "{{item}}"
+    state: present
+  with_items:
+      - "apt-transport-https"
+      - "ca-certificates"
+  tags: docker
+
+- name: Adding docker apt key
+  become: yes
+  apt_key:
+    keyserver: hkp://ha.pool.sks-keyservers.net:80
+    id: 58118E89F3A912897C070ADBF76221572C52609D
+    state: present
+  tags: docker
+
+- name: Adding docker repository for ubuntu 14.04
+  become: yes
+  apt_repository:
+    repo: "deb https://apt.dockerproject.org/repo ubuntu-trusty main"
+    state: present
+  when: "ansible_distribution_version in ['14.04']"
+  tags: docker
+
+- name: Adding docker repository for ubuntu 16.04
+  become: yes
+  apt_repository:
+    repo: "deb https://apt.dockerproject.org/repo  ubuntu-xenial main"
+    state: present
+  when: "ansible_distribution_version in ['16.04']"
+  tags: docker
+
+- name: Updating apt cache
+  become: yes
+  apt:
+    update_cache: yes
+  tags: docker
+
+- name: Installing docker
+  become: yes
+  apt:
+    name: docker-engine
+    state: present
+  tags: docker
+  register: install_result
+
+- name: Installing new docker setting file
+  template:
+    src: docker.j2
+    dest: /etc/default/docker
+  register: result
+  tags: docker
+  when: install_result.changed
+
+- name: Updating docker systemd config EnvironmentFile
+  ini_file:
+    dest: /lib/systemd/system/docker.service
+    section: Service
+    option: EnvironmentFile
+    value: -/etc/default/docker
+    backup: yes
+  when: "ansible_service_mgr in ['systemd'] and result.changed"
+
+- name: Updating docker systemd config ExecStart
+  ini_file:
+    dest: /lib/systemd/system/docker.service
+    section: Service
+    option: ExecStart
+    value: /usr/bin/dockerd $DOCKER_OPTS -H fd://
+    backup: yes
+  when: "ansible_service_mgr in ['systemd'] and result.changed"
+
+- name: Restarting the docker service
+  become: yes
+  service:
+    name: docker
+    state: restarted
+  tags: docker
+  when: result.changed

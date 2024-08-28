@@ -1,0 +1,6 @@
+---
+- name: Installing docker compose
+  pip:
+    name: docker-compose
+    version: "1.11.1"
+    state: present

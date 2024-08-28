@@ -1,0 +1,14 @@
+- name: Determining swarm worker status
+  vars:
+    SWARM_LEADER: "{{ hostvars[groups['swarm_manager_operational'][0]]['ansible_default_ipv4']['address'] }}"
+  shell: >
+    docker -H {{ SWARM_LEADER }}:4000 info 2>/dev/null \
+    | grep -A 8 {{ansible_hostname}} | grep -q 'Healthy' && echo 'active' || echo 'passive'
+  register: swarm_status
+
+- name: Creating swarm_worker_operational group
+  add_host:
+    hostname: "{{ item }}"
+    groups: swarm_worker_operational
+  when: "'active' in hostvars[item].swarm_status.stdout_lines"
+  with_items: "{{ ansible_play_hosts | default(play_hosts) }}"

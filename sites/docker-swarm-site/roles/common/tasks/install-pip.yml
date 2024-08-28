@@ -1,0 +1,11 @@
+- name: Installing python setuptools package
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - python-setuptools
+
+- name: Installing PIP
+  easy_install:
+    name: pip
+    state: latest

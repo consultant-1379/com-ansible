@@ -1,0 +1,9 @@
+---
+- name: Creating a new consul container service
+  shell: >
+    docker run --restart=unless-stopped -d -p 8500:8500 --name=consul progrium/consul -server -bootstrap -advertise={{ ansible_default_ipv4.address }}
+  when: "'consul_operational' not in groups"
+
+#
+# todo! create a consul ha cluster
+#

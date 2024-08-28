@@ -1,0 +1,66 @@
+[swarm:children]
+consul
+managers
+workers
+
+[workers:children]
+functiontestworkers
+buildworkers
+jenkinsslaves
+integrationworkers
+
+[managers]
+ssekilxv4807.rnd.ki.sw.ericsson.se
+ssekilxv4808.rnd.ki.sw.ericsson.se
+ssekilxv4809.rnd.ki.sw.ericsson.se
+ssekilxv4810.rnd.ki.sw.ericsson.se
+
+[consul]
+ssekilxv4811.rnd.ki.sw.ericsson.se
+
+[buildworkers]
+#ssekilx5821.seki.rnd.ericsson.se
+#TODO: change it back to 5165 once symbolic link issue is fixed
+ssekilx5822.rnd.ki.sw.ericsson.se
+# TODO Temporary changes for subnet movement
+#ssekilx5819.rnd.ki.sw.ericsson.se
+#ssekilx5165.rnd.ki.sw.ericsson.se
+
+[functiontestworkers]
+#ssekilx5166.rnd.ki.sw.ericsson.se
+
+[integrationworkers]
+ssekilx5167.rnd.ki.sw.ericsson.se
+#TODO Move 5166 back to functiontestworkers
+ssekilx5166.rnd.ki.sw.ericsson.se
+ssekilx5821.rnd.ki.sw.ericsson.se
+
+[jenkinsslaves]
+# TODO Temporary changes for subnet movement
+#ssekilx5819.seki.rnd.ericsson.se
+
+#
+# group variables
+#
+[jenkinsslaves:vars]
+label=slaves
+
+[consul:vars]
+label=discovery
+
+[managers:vars]
+label=manager
+
+[buildworkers:vars]
+label=build
+
+[functiontestworkers:vars]
+label=functiontest
+
+[integrationworkers:vars]
+label=integrationtest
+
+[swarm:vars]
+docker_path=/repo/docker
+docker_dns=["147.214.6.234", "8.8.8.8", "8.8.4.4"]
+docker_users=["comadmin","cbacomci"]

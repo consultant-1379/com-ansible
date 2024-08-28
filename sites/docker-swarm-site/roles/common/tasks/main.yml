@@ -1,0 +1,9 @@
+---
+
+- name: Updating apt cache
+  apt:
+    update_cache: true
+
+- include: install-git.yml
+- include: install-pip.yml
+- include: pip-install-docker.yml

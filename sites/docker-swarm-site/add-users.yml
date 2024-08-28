@@ -1,0 +1,8 @@
+---
+
+- name: add users
+  hosts: swarm
+  become: true
+
+  roles:
+  - add-users-to-docker-groups

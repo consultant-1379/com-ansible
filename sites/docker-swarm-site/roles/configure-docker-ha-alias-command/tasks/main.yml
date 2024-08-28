@@ -1,0 +1,25 @@
+---
+- name: Writing dockerswarm HA function to global /etc/bash.bashrc
+  vars:
+    CONSUL_IP: "{{ hostvars[groups['consul_operational'][0]]['ansible_default_ipv4']['address'] }}"
+  blockinfile:
+    dest: /etc/bash.bashrc
+    block |
+      dockerswarm(){
+          tmp_http_proxy=$http_proxy
+          http_proxy=''
+          $(which docker) -H $(curl -s {{ CONSUL_IP }}:8500/v1/kv/docker/swarm/leader?raw) "$@"
+          http_proxy=$tmp_http_proxy
+      }
+
+- name: Removing old dockerswarm HA alias from global /etc/bash.bashrc
+  lineinfile:
+    dest: /etc/bash.bashrc
+    regexp: "^alias dockerswarm="
+    state: absent
+
+- name: Removing old docker HA alias from global /etc/bash.bashrc
+  lineinfile:
+    dest: /etc/bash.bashrc
+    regexp: "^alias docker="
+    state: absent

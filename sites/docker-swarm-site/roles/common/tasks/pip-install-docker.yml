@@ -1,0 +1,5 @@
+- name: Installing python module 'docker'
+  pip:
+    name: "docker"
+    umask: "0022"
+  become: True

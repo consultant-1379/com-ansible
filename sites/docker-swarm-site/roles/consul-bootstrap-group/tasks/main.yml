@@ -1,0 +1,13 @@
+---
+- name: Determining consul service status
+  shell: >
+    docker ps -f name=consul -q | grep -q -x '[a-z 0-9]*' && echo 'active' || echo 'failed'
+  register: consul_status
+
+- name: Creating consul_bootstrap group
+  add_host:
+    hostname: "{{ item }}"
+    groups: consul_bootstrap
+  with_items: "{{ ansible_play_hosts | default(play_hosts) }}"
+  when: "'failed' in hostvars[item].consul_status.stdout_lines"
+  run_once: true

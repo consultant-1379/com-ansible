@@ -1,0 +1,8 @@
+- name: Joining manager nodes to cluster
+  vars:
+    CONSUL_IP: "{{ hostvars[groups['consul_operational'][0]]['ansible_default_ipv4']['address'] }}"
+  shell: >
+     docker run --restart=unless-stopped --name swarm_manager_{{ ansible_hostname }} -d -p 4000:4000 swarm manage -H :4000 \
+       --replication \
+       --advertise {{ ansible_default_ipv4.address }}:4000 \
+       consul://{{ CONSUL_IP }}:8500

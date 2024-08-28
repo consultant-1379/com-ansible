@@ -1,0 +1,6 @@
+- name: Joining worker nodes to cluster
+  vars:
+    CONSUL_IP: "{{ hostvars[groups['consul_operational'][0]]['ansible_default_ipv4']['address'] }}"
+  shell: >
+    docker run --restart=unless-stopped --name swarm_worker_{{ ansible_hostname }} -d swarm join --advertise={{ ansible_default_ipv4.address }}:2375 \
+      consul://{{ CONSUL_IP }}:8500

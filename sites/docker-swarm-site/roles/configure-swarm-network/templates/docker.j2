@@ -1,0 +1,1 @@
+DOCKER_OPTS="--label=type={{ label }} --cluster-store=consul://{{ consul_server_ip }}:8500  --cluster-advertise={{ ansible_default_ipv4.address }}:2375 {% for d in docker_dns %} --dns={{ d }}{% endfor %}  -g {{ docker_path }} -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock"

@@ -1,0 +1,144 @@
+---
+#
+# install commons
+#
+- name: Installing commons
+  hosts: swarm
+  any_errors_fatal: true
+
+  become: true
+
+  roles:
+  - common
+  - docker
+  - docker-compose
+  - add-users-to-docker-groups
+
+#
+# consul
+#
+- name: Creating consul groups
+  hosts: consul
+  any_errors_fatal: true
+
+  become: true
+
+  roles:
+  - consul-operational-group
+  - consul-bootstrap-group
+
+- name: Installing consul server
+  hosts: consul_bootstrap
+  any_errors_fatal: true
+
+  become: true
+
+  roles:
+  - install-consul
+
+- name: Creating consul operational group
+  hosts: consul
+  any_errors_fatal: true
+
+  become: true
+
+  roles:
+  - consul-operational-group
+
+#
+# managers
+#
+- name: Creating swarm manager bootstrap group
+  hosts: managers
+  any_errors_fatal: true
+
+  become: true
+
+  roles:
+  - swarm-manager-operational-group
+  - swarm-manager-bootstrap-group
+
+- name: Installing swarm managers
+  hosts: swarm_manager_bootstrap
+  any_errors_fatal: true
+
+  become: true
+
+  roles:
+  - install-swarm-manager
+
+- name: Creating swarm manager operational group
+  hosts: managers
+  any_errors_fatal: true
+
+  become: true
+
+  roles:
+  - swarm-manager-operational-group
+
+#
+# workers
+#
+- name: Creating swarm worker bootstrap group
+  hosts: workers
+  any_errors_fatal: true
+
+  become: true
+
+  roles:
+  - swarm-worker-operational-group
+  - swarm-worker-bootstrap-group
+
+- name: Installing swarm workers
+  hosts: swarm_worker_bootstrap
+  any_errors_fatal: true
+
+  become: true
+
+  roles:
+  - install-swarm-worker
+
+- name: Creating swarm worker operational group
+  hosts: workers
+  any_errors_fatal: true
+
+  become: true
+
+  roles:
+  - swarm-worker-operational-group
+
+#
+# configure the "swarm" network
+#
+- name: Configuring swarm network
+  hosts: swarm_worker_operational, swarm_manager_operational
+  any_errors_fatal: true
+
+  become: true
+
+  roles:
+  - configure-swarm-network
+
+#
+# configure docker command
+#
+- name: Configuring docker command
+  hosts: managers, workers
+  any_errors_fatal: true
+
+  become: true
+
+  roles:
+  - configure-docker-ha-alias-command
+
+#
+# set environment variables
+#
+- name: Setting environment variables in workers
+  hosts: workers
+  any_errors_fatal: true
+
+  become: true
+
+  roles:
+  - set-environment-variables

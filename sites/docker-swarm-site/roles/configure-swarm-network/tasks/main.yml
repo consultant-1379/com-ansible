@@ -1,0 +1,89 @@
+---
+- name: Updating docker setting file for the overlay network
+  vars:
+    consul_server_ip: "{{ hostvars[groups['consul_operational'][0]]['ansible_default_ipv4']['address']  }}"
+  template:
+    src: docker.j2
+    dest: /etc/default/docker
+  register: result
+  when:
+    - "'consul_operational' in groups"
+    - "'swarm_worker_operational' in groups"
+    - "'swarm_manager_operational' in groups"
+
+- name: Stopping the docker deamon
+  service:
+    name: docker
+    state: stopped
+  when: result.changed
+
+- name: Creating directory
+  file: path=/repo/docker state=directory
+  when: result.changed
+
+- name: Updating docker systemd config EnvironmentFile
+  ini_file:
+    dest: /lib/systemd/system/docker.service
+    section: Service
+    option: EnvironmentFile
+    value: -/etc/default/docker
+    backup: yes
+  when: "ansible_service_mgr in ['systemd'] and result.changed"
+
+- name: Updating docker systemd config ExecStart
+  ini_file:
+    dest: /lib/systemd/system/docker.service
+    section: Service
+    option: ExecStart
+    value: /usr/bin/dockerd $DOCKER_OPTS -H fd://
+    backup: yes
+  when: "ansible_service_mgr in ['systemd'] and result.changed"
+
+- name: Starting docker service with systemd
+  systemd:
+    name: docker
+    daemon_reload: yes
+    state: restarted
+    enabled: True
+  when: "ansible_service_mgr in ['systemd'] and result.changed"
+
+- name: Starting the docker service on ubuntu 14.04
+  service:
+    name: docker
+    enabled: yes
+    state: restarted
+  when: "ansible_distribution_version in ['14.04'] and result.changed"
+
+- name: Waiting for swarm manager port to get be available
+  vars:
+    swarm_manager_ip: "{{ hostvars[groups['swarm_manager_operational'][0]]['ansible_default_ipv4']['address']  }}"
+  wait_for:
+    host: "{{ swarm_manager_ip }}"
+    port: 4000
+    delay: 1
+    state: started
+
+- name: Waiting for swarm leader election
+  vars:
+    consul_server_ip: "{{ hostvars[groups['consul_operational'][0]]['ansible_default_ipv4']['address']  }}"
+  wait_for_swarm_leader:
+    consul_server: "{{ consul_server_ip }}"
+    consul_port: 8500
+    timeout: 180
+  run_once: true
+
+- name: Checking if overlay network exists
+  vars:
+    swarm_manager_ip: "{{ hostvars[groups['swarm_manager_operational'][0]]['ansible_default_ipv4']['address']  }}"
+  shell: >
+    docker -H {{ swarm_manager_ip }}:4000 network ls | grep -q swarm_network && echo "exists" || echo "passive"
+  run_once: true
+  register: result
+
+- name: Creating the overlay network
+  vars:
+    swarm_manager_ip: "{{ hostvars[groups['swarm_manager_operational'][0]]['ansible_default_ipv4']['address']  }}"
+  shell: >
+    docker -H {{ swarm_manager_ip }}:4000 network create --driver overlay swarm_network
+  when:  "'passive' in result.stdout"
+  run_once: true

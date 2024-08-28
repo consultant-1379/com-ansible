@@ -1,0 +1,1 @@
+DOCKER_OPTS="--label=type={{ label }} {% for d in docker_dns %} --dns={{ d }}{% endfor %}  -g {{ docker_path }} -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock"

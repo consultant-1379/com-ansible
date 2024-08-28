@@ -1,0 +1,7 @@
+---
+- name: Setting environment variables for consul IP address.
+  vars:
+    CONSUL_IP: "{{ hostvars[groups['consul_operational'][0]]['ansible_default_ipv4']['address'] }}"
+  lineinfile:
+    dest: /etc/bash.bashrc
+    line: "export CONSULE_SERVER={{ CONSUL_IP }}"
